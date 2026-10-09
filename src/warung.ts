@@ -105,19 +105,43 @@ if (MOCK_PAYMENT) {
           description: `Food order at ${WARUNG_NAME}`,
         },
       },
-      new x402ResourceServer(facilitator).register(NETWORK, new ExactEvmScheme()),
+      new x402ResourceServer(facilitator)
+        .register(NETWORK, new ExactEvmScheme())
+        .onAfterVerify(async ({ result }) => {
+          if (!result.isValid) console.log(`❌ Payment rejected at verification: ${result.invalidReason ?? "invalid payment"}`);
+        })
+        .onVerifyFailure(async ({ error }) => {
+          console.log(`❌ Payment rejected at verification: ${error.message}`);
+        })
+        .onAfterSettle(async ({ result }) => {
+          console.log(`🔗 Settled onchain: https://sepolia.basescan.org/tx/${result.transaction}`);
+        })
+        .onSettleFailure(async ({ error }) => {
+          console.log(`❌ Settlement failed: ${error.message}`);
+        }),
     ),
   );
 }
 
+// The x402 middleware runs this handler after VERIFYING the payment but BEFORE
+// settling it onchain. If settlement fails, the middleware throws this response
+// away and returns an error instead. So only count and log the order once the
+// final response has actually gone out successfully.
 let orderCount = 0;
 app.post("/order", (req, res) => {
   const cart = parseCart(req.query.items) as Exclude<ReturnType<typeof parseCart>, string>;
-  orderCount += 1;
+  const orderId = orderCount + 1;
   const paidRp = chargeRp(req.query.items);
-  console.log(`✅ Payment received! Order #${orderCount}: ${describeCart(cart)} (${formatPrice(paidRp)})${MOCK_PAYMENT ? " (mock)" : ""}`);
+  res.on("finish", () => {
+    if (res.statusCode >= 400) {
+      console.log(`❌ Payment failed (${res.statusCode}): ${describeCart(cart)} was NOT ordered`);
+      return;
+    }
+    orderCount = orderId;
+    console.log(`✅ Payment received! Order #${orderId}: ${describeCart(cart)} (${formatPrice(paidRp)})${MOCK_PAYMENT ? " (mock)" : ""}`);
+  });
   res.json({
-    orderId: orderCount,
+    orderId,
     items: describeCart(cart),
     paidRp,
     etaMinutes: 25,
