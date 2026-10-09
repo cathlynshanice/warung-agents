@@ -40,17 +40,14 @@ sequenceDiagram
 npm install
 ```
 
-Isi `.env` (sudah dibuat, cek isinya):
+Salin template `.env.example` menjadi `.env`, lalu isi key kamu:
 
-```bash
-OLLAMA_API_KEY=...       # LLM untuk kedua agent (Ollama Cloud, model gpt-oss:120b)
-OPENROUTER_API_KEY=...   # cadangan kalau OLLAMA_API_KEY kosong
-OPENCODE_API_KEY=...     # Jev (jev-1.13-free di OpenCode Zen)
-MOCK_PAYMENT=true        # mulai tanpa blockchain
-BUYER_PRIVATE_KEY=       # diisi di Step 4
-WARUNG_ADDRESS=          # diisi di Step 4
-WARUNG_URL=http://localhost:4021
+```powershell
+Copy-Item .env.example .env     # PowerShell
+cp .env.example .env            # bash
 ```
+
+Untuk mulai, yang wajib diisi hanya `OLLAMA_API_KEY` (atau `OPENROUTER_API_KEY`) dan `OPENCODE_API_KEY`. `BUYER_PRIVATE_KEY` dan `WARUNG_ADDRESS` baru diisi di Step 4. Penjelasan setiap variabel ada di dalam `.env.example`.
 
 > ⚠️ **Hanya testnet.** Jangan pernah menaruh private key wallet sungguhan di `.env`, dan jangan commit `.env` ke GitHub (sudah ada di `.gitignore`).
 
