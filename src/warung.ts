@@ -9,7 +9,7 @@ import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import {
   GREEDY_MODE, MOCK_PAYMENT, NETWORK, PORT, WARUNG_NAME,
-  formatRp, requireEnv, rpToUsd, rpToUsdc,
+  formatPrice, requireEnv, rpToUsd, rpToUsdc,
 } from "./config.js";
 import { LLM_MODEL, llm } from "./llm.js";
 import { MENU, cartTotalRp, describeCart, parseCart } from "./menu.js";
@@ -28,7 +28,8 @@ app.use(express.json());
 app.get("/menu", (_req, res) => {
   res.json({
     warung: WARUNG_NAME,
-    items: MENU.map(({ id, name, category, priceRp }) => ({ id, name, category, priceRp })),
+    currency: "test USDC on Base Sepolia (demo rate: Rp1.000 = 0.001 USDC)",
+    items: MENU.map(({ id, name, category, priceRp }) => ({ id, name, category, priceUsdc: rpToUsdc(priceRp), priceRp })),
   });
 });
 
@@ -114,7 +115,7 @@ app.post("/order", (req, res) => {
   const cart = parseCart(req.query.items) as Exclude<ReturnType<typeof parseCart>, string>;
   orderCount += 1;
   const paidRp = chargeRp(req.query.items);
-  console.log(`✅ Payment received! Order #${orderCount}: ${describeCart(cart)} (${formatRp(paidRp)})${MOCK_PAYMENT ? " (mock)" : ""}`);
+  console.log(`✅ Payment received! Order #${orderCount}: ${describeCart(cart)} (${formatPrice(paidRp)})${MOCK_PAYMENT ? " (mock)" : ""}`);
   res.json({
     orderId: orderCount,
     items: describeCart(cart),

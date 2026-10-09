@@ -39,7 +39,7 @@ export async function payForOrder(request: OrderRequest): Promise<OrderResult> {
   };
   const decision = applyGuardrails(state, await decidePayment(state));
   if (!(await confirmPayment(state, decision))) {
-    return { paid: false, reason: `Payment ${decision === "reject" ? "rejected" : "declined by the user"}`, requestedRp };
+    return { paid: false, reason: decision === "reject" ? "Rejected: the requested price does not match the menu" : "Not paid: the user declined because it is over budget", requestedRp };
   }
 
   // 4) ✍️ TODO 6 — Sign the USDC payment and retry

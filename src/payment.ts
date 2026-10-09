@@ -3,7 +3,7 @@ import { TypeSafeClient } from "@typesafe-ai/sdk";
 import { x402Client, x402HTTPClient } from "@x402/core/client";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
-import { MOCK_PAYMENT, WARUNG_URL, formatRp, requireEnv, rpToUsdc } from "./config.js";
+import { MOCK_PAYMENT, WARUNG_URL, formatPrice, requireEnv } from "./config.js";
 import { askYesNo } from "./terminal.js";
 
 export type PaymentDecision = "approve" | "reject" | "ask_human";
@@ -76,7 +76,7 @@ export async function describePaymentFailure(res: globalThis.Response): Promise<
 }
 
 export function logPaymentRequired(requestedRp: number): void {
-  console.log(`  💸 402 Payment Required: ${formatRp(requestedRp)} (${rpToUsdc(requestedRp)} test USDC)`);
+  console.log(`  💸 402 Payment Required: ${formatPrice(requestedRp)}`);
 }
 
 /**
@@ -100,7 +100,7 @@ export async function confirmPayment(state: PaymentState, decision: PaymentDecis
   if (decision === "approve") return true;
   if (decision === "reject") return false;
   return askYesNo(
-    `${state.order} costs ${formatRp(state.requestedPriceRp)}, over your budget of ${formatRp(state.budgetRp)}. Proceed?`,
+    `${state.order} costs ${formatPrice(state.requestedPriceRp)}, over your budget of ${formatPrice(state.budgetRp)}. Proceed?`,
   );
 }
 
@@ -128,7 +128,7 @@ export async function mockPayForOrder(
   };
   const decision = applyGuardrails(state, await decide(state));
   if (!(await confirmPayment(state, decision))) {
-    return { paid: false, reason: `Payment ${decision === "reject" ? "rejected" : "declined by the user"}`, requestedRp };
+    return { paid: false, reason: decision === "reject" ? "Rejected: the requested price does not match the menu" : "Not paid: the user declined because it is over budget", requestedRp };
   }
 
   const paidRes = await fetch(url, { method: "POST", headers: { "x-mock-payment": String(requestedRp) } });

@@ -1,9 +1,11 @@
-// The Buyer Agent: an LLM agent that acts for you. It has 3 tools:
+// The Buyer Agent: an LLM agent that acts for you. It has 4 tools:
+//   getBalance -> reads your wallet's test USDC balance from the blockchain
 //   getMenu    -> GET  /menu   (free)
 //   askWarung  -> POST /ask    (free, answered by the Warung Agent's LLM)
 //   placeOrder -> POST /order  (one cart, one payment with x402; Jev and the guardrails decide first)
 import type OpenAI from "openai";
-import { MOCK_PAYMENT, WARUNG_URL } from "./config.js";
+import { getBuyerBalance } from "./balance.js";
+import { MOCK_PAYMENT, WARUNG_URL, usdcToRp } from "./config.js";
 import { LLM_MODEL, LLM_PROVIDER, llm } from "./llm.js";
 import type { OrderRequest, OrderResult } from "./payment.js";
 import { terminal } from "./terminal.js";
@@ -14,12 +16,17 @@ const { payForOrder } = (useSolution ? await import("./solution/pay.js") : await
 };
 
 const SYSTEM_PROMPT = `Kamu adalah Buyer Agent yang memesan makanan untuk user dari Warung Agent.
+Mata uang: pembayaran memakai test USDC di Base Sepolia (testnet). Kurs demo: Rp1.000 = 0.001 USDC.
+Istilah:
+- Saldo = isi wallet user (test USDC). Kalau user tanya saldo, panggil getBalance. Saldo BUKAN budget.
+- Budget = batas belanja untuk satu pesanan, yang disebut user.
 Aturan:
+- Saat menyebut harga, tampilkan dalam USDC dulu, lalu Rupiah dalam kurung. Contoh: 0.03 USDC (Rp30.000).
 - Selalu panggil getMenu dulu sebelum memilih item.
 - Kalau user minta makanan atau makan siang, pilih item dengan category "makanan", jangan minuman.
 - Kalau user menyebut syarat yang tidak terlihat di menu (pedas, alergi, vegetarian, bahan), tanya dulu lewat askWarung.
 - Masukkan SEMUA item yang user minta ke SATU panggilan placeOrder (pakai quantity untuk porsi lebih dari satu).
-- budgetRp harus persis seperti yang user sebut. Jangan pernah mengubahnya. Kalau user tidak menyebut budget, tanya dulu.
+- Budget harus persis seperti yang user sebut, jangan pernah diubah. Kalau user menyebut budget dalam USDC, isi budgetUsdc; kalau dalam Rupiah, isi budgetRp. Kalau user tidak menyebut budget, tanya dulu.
 - JANGAN menilai sendiri apakah harga melebihi budget, dan jangan menolak pesanan karena budget. Tetap panggil placeOrder: placeOrder yang memeriksa budget dan menanyakan user kalau perlu.
 - Kalau placeOrder gagal atau ditolak, jangan coba pesanan lain. Laporkan ke user dan tanya mau apa.
 - placeOrder sudah mengurus pembayaran dan persetujuan. Jangan pernah bilang sudah dibayar kalau hasilnya paid=false.
@@ -29,8 +36,16 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "getBalance",
+      description: "Get the user's wallet balance in test USDC on Base Sepolia, read from the blockchain.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "getMenu",
-      description: "Get the warung's menu: item ids, names, categories and prices in Rupiah.",
+      description: "Get the warung's menu: item ids, names, categories and prices in test USDC (priceUsdc) and Rupiah (priceRp).",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -67,9 +82,10 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
               required: ["id", "quantity"],
             },
           },
-          budgetRp: { type: "number", description: "The user's budget for the whole order in Rupiah, e.g. 35000" },
+          budgetRp: { type: "number", description: "Budget for the whole order in Rupiah, e.g. 35000" },
+          budgetUsdc: { type: "number", description: "Budget for the whole order in test USDC, e.g. 0.05" },
         },
-        required: ["items", "budgetRp"],
+        required: ["items"],
       },
     },
   },
@@ -77,6 +93,8 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 
 async function runTool(name: string, args: Record<string, unknown>, userRequest: string): Promise<unknown> {
   switch (name) {
+    case "getBalance":
+      return getBuyerBalance();
     case "getMenu":
       return (await fetch(`${WARUNG_URL}/menu`)).json();
     case "askWarung": {
@@ -87,16 +105,20 @@ async function runTool(name: string, args: Record<string, unknown>, userRequest:
       });
       return res.json();
     }
-    case "placeOrder":
+    case "placeOrder": {
+      // The budget may come in USDC or Rupiah; payment checks work in Rupiah.
+      const budgetRp = args.budgetUsdc !== undefined ? usdcToRp(Number(args.budgetUsdc)) : Number(args.budgetRp);
+      if (!Number.isFinite(budgetRp) || budgetRp <= 0) return { error: "Ask the user for a budget first." };
       return payForOrder({
         // Models sometimes say itemId instead of id; accept both.
         items: ((args.items ?? []) as { id?: string; itemId?: string; quantity?: number }[]).map((line) => ({
           itemId: String(line.id ?? line.itemId),
           quantity: Number(line.quantity ?? 1),
         })),
-        budgetRp: Number(args.budgetRp),
+        budgetRp,
         userRequest,
       });
+    }
     default:
       return { error: `Unknown tool ${name}` };
   }
