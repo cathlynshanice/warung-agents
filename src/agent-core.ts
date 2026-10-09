@@ -15,8 +15,15 @@ type PayForOrder = (request: OrderRequest) => Promise<OrderResult>;
 
 /** The payment flow with your Jev decision (TODO 5 in jev.ts), or the solution's with --solution. */
 export async function loadPayForOrder(useSolution: boolean): Promise<PayForOrder> {
-  const jev = useSolution ? await import("./solution/jev.js") : await import("./jev.js");
-  return createPayForOrder(jev.decidePayment);
+  if (!useSolution) return createPayForOrder((await import("./jev.js")).decidePayment);
+  // solution/ is instructor-only: it is git-ignored, so it exists only on the instructor's laptop.
+  const solutionPath = "./solution/jev.js";
+  try {
+    return createPayForOrder((await import(solutionPath)).decidePayment);
+  } catch {
+    console.error("❌ The solution is not in this copy of the repo. Fill in TODO 5 in src/jev.ts and run `npm run dev` instead.");
+    process.exit(1);
+  }
 }
 
 const SYSTEM_PROMPT = `Kamu adalah Buyer Agent yang memesan makanan untuk user dari Warung Agent.

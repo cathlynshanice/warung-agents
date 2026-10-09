@@ -1,4 +1,4 @@
-// ✍️ Hands-on: TODO 5, the one part you write. Stuck? See solution/jev.ts or run `npm run dev:solution`.
+// ✍️ Hands-on: TODO 5, the one part you write. Stuck? Open the ✅ Answer toggle in README.md (Step 2).
 import { choice } from "@typesafe-ai/sdk";
 import { formatPrice } from "./config.js";
 import { jev, type PaymentDecision, type PaymentState } from "./payment.js";

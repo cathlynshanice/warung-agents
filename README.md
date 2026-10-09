@@ -32,7 +32,6 @@ sequenceDiagram
 | `src/payment.ts` | Klien Jev, klien x402, guardrail, mock payment | Sudah jadi |
 | `src/pay.ts` | Alur pembayaran x402: 402 → putuskan → tanda tangan → ulang | Sudah jadi, untuk dibaca |
 | `src/jev.ts` | Jev memutuskan pembayaran | ✍️ TODO 5 (satu-satunya hands-on) |
-| `src/solution/jev.ts` | Jawaban TODO 5 | Contekan |
 
 ## Step 0: Setup (10 menit)
 
@@ -54,7 +53,7 @@ Untuk mulai, yang wajib diisi hanya `OLLAMA_API_KEY` (atau `OPENROUTER_API_KEY`)
 ## Cara cepat: satu perintah + UI
 
 ```bash
-npm run dev:solution    # pakai kode jawaban (langsung jalan)
+npm run dev:solution    # khusus pengajar: pakai solution lokal di src/solution/ (tidak ada di repo)
 npm run dev             # pakai jawaban TODO 5 kamu di src/jev.ts
 ```
 
@@ -190,7 +189,7 @@ Bagian ini tidak perlu diketik. Baca bersama untuk memahami apa yang terjadi set
 
 Jalankan ulang Skenario 1, lalu buka link basescan-nya. Itu **pembayaran onchain sungguhan** di testnet.
 
-Ketinggalan di TODO 5? `npm run dev:solution` menjalankan semuanya dengan jawaban Jev yang lengkap.
+Ketinggalan di TODO 5? Buka toggle **✅ Jawaban** di Step 2.
 
 ## Stretch goals
 
@@ -208,4 +207,4 @@ Ketinggalan di TODO 5? `npm run dev:solution` menjalankan semuanya dengan jawaba
 | `Item not found` | Pakai id dari menu, misalnya `nasi-goreng` (format keranjang: `items=nasi-goreng:2,es-teh:1`) |
 | `EADDRINUSE :4021` | Warung sudah jalan di terminal lain |
 | `429` / rate limit | Kuota LLM habis. Ganti `LLM_MODEL` di `.env` (misalnya `nemotron-3-super`), atau tunggu |
-| `Error: TODO 5` | Isi TODO 5 di `src/jev.ts`, atau jalankan `npm run dev:solution` |
+| `Error: TODO 5` | Isi TODO 5 di `src/jev.ts` (jawabannya ada di toggle ✅ Jawaban, Step 2) |
