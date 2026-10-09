@@ -1,5 +1,5 @@
 // One command for the whole demo: the Warung Agent, the Buyer Agent and the web UI.
-//   npm run dev             -> uses your TODO code in pay.ts / jev.ts
+//   npm run dev             -> uses your Jev code in jev.ts
 //   npm run dev:solution    -> uses the finished code in solution/
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -181,7 +181,7 @@ startWarung();
 const server = app.listen(UI_PORT, () => {
   originalLog("");
   originalLog(`🍳 Warung Agent  → ${WARUNG_URL}${greedy ? " (greedy mode)" : ""}`);
-  originalLog(`🛒 Buyer Agent   → ${useSolution ? "solution code" : "your TODO code"} · ${MOCK_PAYMENT ? "MOCK payment" : "x402 on Base Sepolia"} · ${LLM_MODEL}`);
+  originalLog(`🛒 Buyer Agent   → ${useSolution ? "solution code" : "your Jev code"} · ${MOCK_PAYMENT ? "MOCK payment" : "x402 on Base Sepolia"} · ${LLM_MODEL}`);
   originalLog(`🖥️  Open the UI   → http://localhost:${UI_PORT}`);
   originalLog("");
 });

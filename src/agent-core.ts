@@ -13,7 +13,7 @@ import { createPayForOrder } from "./pay.js";
 
 type PayForOrder = (request: OrderRequest) => Promise<OrderResult>;
 
-/** The payment flow with your Jev decision (TODO 5 in jev.ts), or the solution's with --solution. */
+/** The payment flow with your Jev decision (jev.ts), or the solution's with --solution. */
 export async function loadPayForOrder(useSolution: boolean): Promise<PayForOrder> {
   if (!useSolution) return createPayForOrder((await import("./jev.js")).decidePayment);
   // solution/ is instructor-only: it is git-ignored, so it exists only on the instructor's laptop.
@@ -21,7 +21,7 @@ export async function loadPayForOrder(useSolution: boolean): Promise<PayForOrder
   try {
     return createPayForOrder((await import(solutionPath)).decidePayment);
   } catch {
-    console.error("❌ The solution is not in this copy of the repo. Fill in TODO 5 in src/jev.ts and run `npm run dev` instead.");
+    console.error("❌ The solution is not in this copy of the repo. Write decidePayment in src/jev.ts and run `npm run dev` instead.");
     process.exit(1);
   }
 }

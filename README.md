@@ -31,7 +31,7 @@ sequenceDiagram
 | `src/buyer-agent.ts` | Buyer Agent: loop LLM dengan tool `getMenu`, `askWarung`, `placeOrder` | Sudah jadi |
 | `src/payment.ts` | Klien Jev, klien x402, guardrail, mock payment | Sudah jadi |
 | `src/pay.ts` | Alur pembayaran x402: 402 → putuskan → tanda tangan → ulang | Sudah jadi, untuk dibaca |
-| `src/jev.ts` | Jev memutuskan pembayaran | ✍️ TODO 5 (satu-satunya hands-on) |
+| `src/jev.ts` | Jev memutuskan pembayaran | ✍️ Hands-on (satu-satunya bagian yang diisi) |
 
 ## Step 0: Setup (10 menit)
 
@@ -54,7 +54,7 @@ Untuk mulai, yang wajib diisi hanya `OLLAMA_API_KEY` (atau `OPENROUTER_API_KEY`)
 
 ```bash
 npm run dev:solution    # khusus pengajar: pakai solution lokal di src/solution/ (tidak ada di repo)
-npm run dev             # pakai jawaban TODO 5 kamu di src/jev.ts
+npm run dev             # pakai kode Jev kamu di src/jev.ts
 ```
 
 Perintah ini menyalakan **Warung Agent**, **Buyer Agent**, dan **web UI** sekaligus. Buka **http://localhost:3000**:
@@ -86,7 +86,7 @@ Tanya langsung ke Warung Agent:
 curl -X POST http://localhost:4021/ask -H "content-type: application/json" -d "{\"question\":\"gado-gado ada kacangnya?\"}"
 ```
 
-## Step 2: ✍️ TODO 5, Jev memutuskan pembayaran (15 menit)
+## Step 2: ✍️ Hands-on, Jev memutuskan pembayaran (15 menit)
 
 Buka `src/jev.ts`. Jev menerima `state` (permintaan user, item, budget, harga menu, harga yang ditagih) lalu memilih satu dari tiga:
 
@@ -184,12 +184,12 @@ Bagian ini tidak perlu diketik. Baca bersama untuk memahami apa yang terjadi set
 
 1. **Pesan tanpa bayar:** warung membalas `402 Payment Required`.
 2. **Baca tagihan dari 402:** `getPaymentRequiredResponse(...)` memberi jumlah, alamat warung, dan jaringan. `accepts[0].amount` dibaca sebagai Rupiah (1 unit USDC = Rp1).
-3. **Putuskan sebelum menandatangani:** Jev (TODO 5), lalu guardrail, lalu kamu kalau perlu.
+3. **Putuskan sebelum menandatangani:** Jev (bagian hands-on kamu), lalu guardrail, lalu kamu kalau perlu.
 4. **Tanda tangani dan pesan ulang:** `createPaymentPayload(...)` menandatangani izin pembayaran USDC dengan private key pembeli, `encodePaymentSignatureHeader(...)` menjadikannya header HTTP, lalu pesanan dikirim ulang. Warung meneruskannya ke facilitator, yang memindahkan USDC di blockchain dan mengembalikan hash transaksinya.
 
 Jalankan ulang Skenario 1, lalu buka link basescan-nya. Itu **pembayaran onchain sungguhan** di testnet.
 
-Ketinggalan di TODO 5? Buka toggle **✅ Jawaban** di Step 2.
+Ketinggalan di bagian Jev? Buka toggle **✅ Jawaban** di Step 2.
 
 ## Stretch goals
 
@@ -207,4 +207,4 @@ Ketinggalan di TODO 5? Buka toggle **✅ Jawaban** di Step 2.
 | `Item not found` | Pakai id dari menu, misalnya `nasi-goreng` (format keranjang: `items=nasi-goreng:2,es-teh:1`) |
 | `EADDRINUSE :4021` | Warung sudah jalan di terminal lain |
 | `429` / rate limit | Kuota LLM habis. Ganti `LLM_MODEL` di `.env` (misalnya `nemotron-3-super`), atau tunggu |
-| `Error: TODO 5` | Isi TODO 5 di `src/jev.ts` (jawabannya ada di toggle ✅ Jawaban, Step 2) |
+| `Error: Jev hands-on belum diisi` | Isi `decidePayment` di `src/jev.ts` (jawabannya ada di toggle ✅ Jawaban, Step 2) |

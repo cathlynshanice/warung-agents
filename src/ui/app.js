@@ -74,7 +74,7 @@ async function loadStatus() {
     mode.textContent = s.mock ? "Mock · tanpa blockchain" : "x402 · Base Sepolia";
     mode.classList.toggle("chip--live", !s.mock);
     $("#buyer-sub").textContent =
-      `Agent pembeli · ${s.model}${s.solution ? " · kode solution" : " · kode TODO kamu"}`;
+      `Agent pembeli · ${s.model}${s.solution ? " · kode solution" : " · kode Jev kamu"}`;
     $("#warung-sub").textContent = `${s.warungName} · ${s.warungUrl.replace(/^https?:\/\//, "")}`;
     $("#greedy").checked = s.greedy;
     setBusy(s.busy);

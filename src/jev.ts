@@ -1,11 +1,11 @@
-// ✍️ Hands-on: TODO 5, the one part you write. Stuck? Open the ✅ Answer toggle in README.md (Step 2).
+// ✍️ Hands-on: the one part you write. Stuck? Open the ✅ Answer toggle in README.md (Step 2).
 import { choice } from "@typesafe-ai/sdk";
 import { formatPrice } from "./config.js";
 import { jev, type PaymentDecision, type PaymentState } from "./payment.js";
 
 /** Ask Jev what to do with a Payment Request: approve, reject, or ask_human. */
 export async function decidePayment(state: PaymentState): Promise<PaymentDecision> {
-  // ✍️ TODO 5 — Jev decides the payment
+  // ✍️ Hands-on: Jev decides the payment
   //   5a) Call jev.systemOne({ state, questions: { decision: choice(...) } })
   //       The choice has 3 options, each with a description:
   //         approve   : requested price is not higher than the menu price and is within the budget
@@ -13,6 +13,6 @@ export async function decidePayment(state: PaymentState): Promise<PaymentDecisio
   //         ask_human : requested price is not higher than the menu price, but it is over the budget
   //   5b) Read answers.decision.choice and answers.decision.confidence
   //   5c) Log it, then return the choice
-  void choice; void jev; void formatPrice; // (delete this line when you write TODO 5)
-  throw new Error(`TODO 5: ask Jev to decide the payment for ${state.order}`);
+  void choice; void jev; void formatPrice; // (delete this line when you write your code)
+  throw new Error(`Jev hands-on belum diisi: write decidePayment in src/jev.ts (order: ${state.order})`);
 }

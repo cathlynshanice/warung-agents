@@ -1,5 +1,5 @@
 // The buyer's x402 payment flow: request -> 402 -> decide -> sign -> retry.
-// Ready to read, not to type: the hands-on part is Jev's decision (TODO 5 in jev.ts).
+// Ready to read, not to type: the hands-on part is Jev's decision in jev.ts.
 import { MOCK_PAYMENT } from "./config.js";
 import {
   applyGuardrails, confirmPayment, describePaymentFailure, httpClient, logPaymentRequired, mockPayForOrder, orderUrl, priceOrder,
@@ -30,7 +30,7 @@ export function createPayForOrder(decidePayment: DecidePayment) {
     const requestedRp = Number(paymentRequired.accepts[0].amount);
     logPaymentRequired(requestedRp);
 
-    // 3) Decide BEFORE signing anything: Jev (TODO 5), then the guardrails, then you if needed.
+    // 3) Decide BEFORE signing anything: Jev (your hands-on code), then the guardrails, then you if needed.
     const state: PaymentState = {
       userRequest: request.userRequest,
       order: priced.order,
