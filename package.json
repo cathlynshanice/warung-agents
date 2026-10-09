@@ -7,7 +7,9 @@
     "warung": "tsx src/warung.ts",
     "agent": "tsx src/buyer-agent.ts",
     "agent:solution": "tsx src/buyer-agent.ts --solution",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/dev.ts",
+    "dev:solution": "tsx src/dev.ts --solution"
   },
   "keywords": [],
   "author": "",

@@ -26,6 +26,7 @@ const app = express();
 app.use(express.json());
 
 app.get("/menu", (_req, res) => {
+  console.log("📋 Menu requested");
   res.json({
     warung: WARUNG_NAME,
     currency: "test USDC on Base Sepolia (demo rate: Rp1.000 = 0.001 USDC)",
@@ -45,7 +46,8 @@ app.post("/ask", async (req, res) => {
     res.status(400).json({ error: "Send JSON like {\"question\": \"...\"}" });
     return;
   }
-  console.log(`💬 Buyer asks: ${question}`);
+  const asker = req.header("x-asker") === "human" ? "Customer" : "Buyer Agent";
+  console.log(`💬 ${asker} asks: ${question}`);
   try {
     const completion = await llm.chat.completions.create({
       model: LLM_MODEL,
@@ -67,9 +69,16 @@ app.post("/ask", async (req, res) => {
 app.post("/order", (req: Request, res: Response, next: NextFunction) => {
   const cart = parseCart(req.query.items);
   if (typeof cart === "string") {
+    console.log(`⚠️ Order refused: ${cart}`);
     res.status(404).json({ error: cart });
     return;
   }
+  const paying = req.header("payment-signature") || req.header("x-payment") || req.header("x-mock-payment");
+  console.log(
+    paying
+      ? `💳 Payment arrived for ${describeCart(cart)}, checking it`
+      : `🧾 New order ${describeCart(cart)}: asking for ${formatPrice(chargeRp(req.query.items))} (402)`,
+  );
   next();
 });
 
@@ -117,7 +126,9 @@ if (MOCK_PAYMENT) {
           console.log(`🔗 Settled onchain: https://sepolia.basescan.org/tx/${result.transaction}`);
         })
         .onSettleFailure(async ({ error }) => {
-          console.log(`❌ Settlement failed: ${error.message}`);
+          // viem errors span many lines (request body, args...); the first line and the details say enough.
+          const details = error.message.match(/Details: (.*)/)?.[1];
+          console.log(`❌ Settlement failed: ${error.message.split(/\r?\n/)[0]}${details ? ` (${details})` : ""}`);
         }),
     ),
   );

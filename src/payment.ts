@@ -4,6 +4,7 @@ import { x402Client, x402HTTPClient } from "@x402/core/client";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
 import { MOCK_PAYMENT, WARUNG_URL, formatPrice, requireEnv } from "./config.js";
+import { emitBuyerEvent } from "./events.js";
 import { askYesNo } from "./terminal.js";
 
 export type PaymentDecision = "approve" | "reject" | "ask_human";
@@ -64,15 +65,27 @@ export async function priceOrder(items: OrderLine[]): Promise<{ order: string; m
   };
 }
 
-/** Why a paid retry failed. A rejected payment comes back as another 402 with the reason inside. */
+/**
+ * Why a paid retry failed. A payment rejected at verification comes back as a new 402
+ * (PAYMENT-REQUIRED header); one that failed onchain carries a PAYMENT-RESPONSE header.
+ */
 export async function describePaymentFailure(res: globalThis.Response): Promise<string> {
   const body = await res.json().catch(() => undefined);
-  if (res.status === 402 && httpClient) {
-    const reason = httpClient.getPaymentRequiredResponse((name) => res.headers.get(name), body).error;
-    const hint = /insufficient|balance|funds/i.test(reason ?? "") ? " (fund the buyer at faucet.circle.com)" : "";
-    return `Payment failed: ${reason ?? "rejected by the facilitator"}${hint}`;
+  const header = (name: string) => res.headers.get(name);
+  let reason: string | undefined;
+  if (httpClient && header("PAYMENT-RESPONSE")) {
+    try { reason = httpClient.getPaymentSettleResponse(header).errorReason; } catch { /* not a settle response */ }
   }
-  return `Payment failed (${res.status}): ${JSON.stringify(body)}`;
+  if (!reason && httpClient && header("PAYMENT-REQUIRED")) {
+    try { reason = httpClient.getPaymentRequiredResponse(header, body).error; } catch { /* not a 402 */ }
+  }
+  reason ??= (body as { error?: string } | undefined)?.error ?? `HTTP ${res.status}`;
+  const hint = /insufficient|balance|funds/i.test(reason)
+    ? " (fund the buyer at faucet.circle.com)"
+    : /transaction_failed|429|too many/i.test(reason)
+      ? " (the facilitator could not send the transaction, often a busy public RPC: no money moved, try again in a minute)"
+      : "";
+  return `Payment failed: ${reason.split(/\r?\n/)[0]}${hint}`;
 }
 
 export function logPaymentRequired(requestedRp: number): void {
@@ -97,6 +110,14 @@ export function applyGuardrails(state: PaymentState, decision: PaymentDecision):
 
 /** Turn a Payment Decision into yes/no, asking the human when needed. */
 export async function confirmPayment(state: PaymentState, decision: PaymentDecision): Promise<boolean> {
+  emitBuyerEvent({
+    type: "decision",
+    order: state.order,
+    menuPriceRp: state.menuPriceRp,
+    requestedPriceRp: state.requestedPriceRp,
+    budgetRp: state.budgetRp,
+    decision,
+  });
   if (decision === "approve") return true;
   if (decision === "reject") return false;
   return askYesNo(

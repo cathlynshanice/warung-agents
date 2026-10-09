@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warung Agents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="tabs" aria-label="Pilih tampilan">
+    <button class="tab is-active" data-panel="buyer" type="button">My Agent</button>
+    <button class="tab" data-panel="warung" type="button">Warung Agent</button>
+  </nav>
+
+  <main class="split">
+    <!-- My Agent: chat with the Buyer Agent -->
+    <section class="panel panel--buyer is-active" id="panel-buyer" aria-labelledby="buyer-title">
+      <header class="panel__head">
+        <div class="panel__title">
+          <h1 id="buyer-title">My Agent</h1>
+          <p class="panel__sub" id="buyer-sub">Agent pembeli yang memesan dan membayar untukmu</p>
+        </div>
+        <div class="chips">
+          <span class="chip" id="buyer-mode">…</span>
+          <button class="chip chip--button" id="buyer-balance" type="button" title="Muat ulang saldo">Saldo …</button>
+          <button class="chip chip--button" id="reset" type="button">Mulai ulang</button>
+        </div>
+      </header>
+
+      <div class="feed" id="buyer-feed" aria-live="polite">
+        <div class="empty" id="buyer-empty">
+          <p class="empty__lead">Minta My Agent memesan. Setiap tagihan diperiksa Jev sebelum dibayar.</p>
+          <div class="suggestions">
+            <button type="button" class="suggestion">Berapa saldo yang kita miliki?</button>
+            <button type="button" class="suggestion">Apa saja menunya, berikut harganya?</button>
+            <button type="button" class="suggestion">Pesenin nasi goreng buat makan siang, budget 35 ribu</button>
+            <button type="button" class="suggestion">Beli 2 nasi goreng, budget 0.05 USDC</button>
+            <button type="button" class="suggestion">Aku alergi kacang, pesenin makan siang paling murah yang aman, budget 30 ribu</button>
+          </div>
+        </div>
+      </div>
+
+      <form class="composer" id="buyer-form">
+        <label class="visually-hidden" for="buyer-input">Pesan untuk My Agent</label>
+        <input id="buyer-input" autocomplete="off" placeholder="Pesenin nasi goreng, budget 35 ribu">
+        <button type="submit" class="send" id="buyer-send">Kirim</button>
+      </form>
+    </section>
+
+    <!-- Warung Agent: what the seller sees -->
+    <section class="panel panel--warung" id="panel-warung" aria-labelledby="warung-title">
+      <header class="panel__head">
+        <div class="panel__title">
+          <h2 id="warung-title">Warung Agent</h2>
+          <p class="panel__sub" id="warung-sub">Penjual: menu, tanya jawab, dan tagihan x402</p>
+        </div>
+        <div class="chips">
+          <button class="chip chip--button" id="warung-balance" type="button" title="Muat ulang saldo">Kas …</button>
+          <label class="switch">
+            <input type="checkbox" id="greedy">
+            <span class="switch__track" aria-hidden="true"></span>
+            <span>Mode curang <small>(tagih 2×)</small></span>
+          </label>
+        </div>
+      </header>
+
+      <div class="feed" id="warung-feed" aria-live="polite">
+        <div class="empty" id="warung-empty">
+          <p class="empty__lead">Belum ada pembeli. Tagihan dan nota muncul di sini saat My Agent memesan.</p>
+        </div>
+      </div>
+
+      <form class="composer" id="warung-form">
+        <label class="visually-hidden" for="warung-input">Pertanyaan untuk warung</label>
+        <input id="warung-input" autocomplete="off" placeholder="Tanya warung langsung: gado-gado ada kacangnya?">
+        <button type="submit" class="send" id="warung-send">Tanya</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -30,9 +30,9 @@ sequenceDiagram
 | `src/warung.ts` | Warung Agent: `/menu`, `/ask` (LLM), `/order` (x402) | Sudah jadi |
 | `src/buyer-agent.ts` | Buyer Agent: loop LLM dengan tool `getMenu`, `askWarung`, `placeOrder` | Sudah jadi |
 | `src/payment.ts` | Klien Jev, klien x402, guardrail, mock payment | Sudah jadi |
-| `src/pay.ts` | Alur pembayaran: 402 → putuskan → tanda tangan → ulang | ✍️ TODO 4 dan TODO 6 |
-| `src/jev.ts` | Jev memutuskan pembayaran | ✍️ TODO 5 |
-| `src/solution/` | Jawaban ketiga TODO | Contekan |
+| `src/pay.ts` | Alur pembayaran x402: 402 → putuskan → tanda tangan → ulang | Sudah jadi, untuk dibaca |
+| `src/jev.ts` | Jev memutuskan pembayaran | ✍️ TODO 5 (satu-satunya hands-on) |
+| `src/solution/jev.ts` | Jawaban TODO 5 | Contekan |
 
 ## Step 0: Setup (10 menit)
 
@@ -50,6 +50,20 @@ cp .env.example .env            # bash
 Untuk mulai, yang wajib diisi hanya `OLLAMA_API_KEY` (atau `OPENROUTER_API_KEY`) dan `OPENCODE_API_KEY`. `BUYER_PRIVATE_KEY` dan `WARUNG_ADDRESS` baru diisi di Step 4. Penjelasan setiap variabel ada di dalam `.env.example`.
 
 > ⚠️ **Hanya testnet.** Jangan pernah menaruh private key wallet sungguhan di `.env`, dan jangan commit `.env` ke GitHub (sudah ada di `.gitignore`).
+
+## Cara cepat: satu perintah + UI
+
+```bash
+npm run dev:solution    # pakai kode jawaban (langsung jalan)
+npm run dev             # pakai jawaban TODO 5 kamu di src/jev.ts
+```
+
+Perintah ini menyalakan **Warung Agent**, **Buyer Agent**, dan **web UI** sekaligus. Buka **http://localhost:3000**:
+
+- **My Agent** (kiri): chat dengan Buyer Agent. Setiap tagihan muncul sebagai kartu dengan stempel keputusan Jev (Disetujui / Ditolak / Tanya dulu). Untuk "Tanya dulu", jawab dengan tombol **Bayar** atau **Jangan bayar**.
+- **Warung Agent** (kanan): yang dilihat penjual: tanya jawab, tagihan 402, dan nota lunas (dengan link basescan di mode testnet). Kamu juga bisa bertanya langsung ke warung, dan menyalakan **Mode curang** untuk Skenario 3 tanpa restart manual.
+
+Tekan Ctrl+C untuk mematikan semuanya. Langkah di bawah ini adalah cara manual dengan dua terminal, yang tetap bisa dipakai.
 
 ## Step 1: Jalankan Warung Agent (10 menit)
 
@@ -165,38 +179,18 @@ Lihat terminal 1: LLM warung yang menjawab.
 2. Ambil test USDC untuk **address pembeli** di [faucet.circle.com](https://faucet.circle.com), pilih **Base Sepolia**. Pembeli tidak butuh test ETH, karena facilitator yang mengirim transaksinya.
 3. Set `MOCK_PAYMENT=false` di `.env`, lalu restart kedua terminal.
 
-### ✍️ TODO 4: Baca harga dari 402 (`src/pay.ts`)
+### Baca alur pembayarannya (`src/pay.ts`, sudah jadi)
 
-<details><summary>✅ Jawaban</summary>
+Bagian ini tidak perlu diketik. Baca bersama untuk memahami apa yang terjadi setelah Jev menyetujui:
 
-```ts
-const body = await first.json().catch(() => undefined);
-const paymentRequired = httpClient!.getPaymentRequiredResponse((name) => first.headers.get(name), body);
-const requestedRp = Number(paymentRequired.accepts[0].amount);
-```
-Hapus 2 baris placeholder di bawah TODO 4.
-</details>
-
-### ✍️ TODO 6: Tanda tangani pembayaran dan ulangi pesanan (`src/pay.ts`)
-
-<details><summary>✅ Jawaban</summary>
-
-```ts
-const payload = await httpClient!.createPaymentPayload(paymentRequired);
-const headers = httpClient!.encodePaymentSignatureHeader(payload);
-const paidRes = await fetch(url, { method: "POST", headers });
-if (!paidRes.ok) return { paid: false, reason: await describePaymentFailure(paidRes), requestedRp };
-const order = await paidRes.json();
-const tx = httpClient!.getPaymentSettleResponse((name) => paidRes.headers.get(name)).transaction;
-console.log(`  🔗 https://sepolia.basescan.org/tx/${tx}`);
-return { paid: true, requestedRp, order, tx };
-```
-Ganti baris `void ...` dan `throw new Error("TODO 6 ...")`.
-</details>
+1. **Pesan tanpa bayar:** warung membalas `402 Payment Required`.
+2. **Baca tagihan dari 402:** `getPaymentRequiredResponse(...)` memberi jumlah, alamat warung, dan jaringan. `accepts[0].amount` dibaca sebagai Rupiah (1 unit USDC = Rp1).
+3. **Putuskan sebelum menandatangani:** Jev (TODO 5), lalu guardrail, lalu kamu kalau perlu.
+4. **Tanda tangani dan pesan ulang:** `createPaymentPayload(...)` menandatangani izin pembayaran USDC dengan private key pembeli, `encodePaymentSignatureHeader(...)` menjadikannya header HTTP, lalu pesanan dikirim ulang. Warung meneruskannya ke facilitator, yang memindahkan USDC di blockchain dan mengembalikan hash transaksinya.
 
 Jalankan ulang Skenario 1, lalu buka link basescan-nya. Itu **pembayaran onchain sungguhan** di testnet.
 
-Ketinggalan? `npm run agent:solution` menjalankan Buyer Agent dengan jawaban lengkap.
+Ketinggalan di TODO 5? `npm run dev:solution` menjalankan semuanya dengan jawaban Jev yang lengkap.
 
 ## Stretch goals
 
@@ -214,4 +208,4 @@ Ketinggalan? `npm run agent:solution` menjalankan Buyer Agent dengan jawaban len
 | `Item not found` | Pakai id dari menu, misalnya `nasi-goreng` (format keranjang: `items=nasi-goreng:2,es-teh:1`) |
 | `EADDRINUSE :4021` | Warung sudah jalan di terminal lain |
 | `429` / rate limit | Kuota LLM habis. Ganti `LLM_MODEL` di `.env` (misalnya `nemotron-3-super`), atau tunggu |
-| `Error: TODO 5` / `TODO 6` | Isi TODO-nya, atau jalankan `npm run agent:solution` |
+| `Error: TODO 5` | Isi TODO 5 di `src/jev.ts`, atau jalankan `npm run dev:solution` |
